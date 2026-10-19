@@ -1,4 +1,4 @@
-"""pipeline/evaluator.py : mesure les performances (accuracy, F1...)"""
+"""pipeline/evaluator.py : mesure les performances (accuracy, F1...)."""
 from utils import metrics
 
 
