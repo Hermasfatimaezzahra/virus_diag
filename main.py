@@ -4,6 +4,7 @@ données -> trainer -> evaluator (metrics) -> predictor (seuil >= 0.5)
 from core.dataset import Dataset
 from core.logistic_regression import LogisticRegression
 from core.neural_network import NeuralNetwork
+from core.knn import KNN
 from pipeline.trainer import Trainer
 from pipeline.evaluator import Evaluator
 from pipeline.predictor import ClinicalPredictor
@@ -18,7 +19,7 @@ def main():
     test_set, _ = test_set.standardize(scaler)
 
     # 2. Entraînement avec trainer.py + 3. Évaluation avec evaluator.py (metrics.py)
-    models = [LogisticRegression(), NeuralNetwork()]
+    models = [LogisticRegression(), NeuralNetwork(), KNN()]
     for model in models:
         Trainer(model).train(train_set)
         scores = Evaluator(model).evaluate(test_set)
