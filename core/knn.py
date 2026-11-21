@@ -7,6 +7,8 @@ class KNN(Model):
     """Un patient ressemble à ses k voisins les plus proches dans les données d'entraînement."""
 
     def __init__(self, k=5):
+        if k <= 0:
+            raise ValueError("k doit être un entier positif")
         self._k = k
         self._X = None   # KNN n'apprend pas de poids : il mémorise les patients connus
         self._y = None
