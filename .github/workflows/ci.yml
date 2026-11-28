@@ -1,0 +1,66 @@
+# Pipeline CI/CD de virus_diag : se lance a chaque push.
+# lint -> test -> build -> deploy : chaque etape attend la reussite de la precedente,
+# et la moindre erreur fait echouer le pipeline.
+name: CI
+
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install flake8
+      - name: Verifier le style et les erreurs du code
+        run: flake8 .
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Installer les dependances
+        run: pip install -r requirements.txt
+      - name: Lancer les tests
+        run: pytest -v
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+      - name: Compiler tous les fichiers Python
+        run: python -m compileall -q core pipeline utils app main.py
+      - name: Lancer le programme complet
+        run: python main.py
+      - name: Construire le paquet
+        run: zip -r virus_diag.zip core pipeline utils app data main.py requirements.txt -x "*__pycache__*"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: virus_diag
+          path: virus_diag.zip
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: virus_diag
+      - name: Publier une version sur GitHub (Releases)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v${{ github.run_number }}" virus_diag.zip --repo "${{ github.repository }}" --title "virus_diag v${{ github.run_number }}" --notes "Version publiee automatiquement apres lint, tests et build reussis."
